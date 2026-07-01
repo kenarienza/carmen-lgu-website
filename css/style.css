@@ -760,11 +760,17 @@ label { display: block; font-size: .82rem; font-weight: 600; margin-bottom: 6px;
   .nav-toggle { display: block; }
 }
 @media (max-width: 768px) {
-  .topbar-left span:not(:first-child) { display: none; }
+  .topbar { display: none; }
   .hero h1 { font-size: 2.1rem; }
   .quicklinks-grid { grid-template-columns: repeat(2, 1fr); }
   .officials-grid, .news-grid, .barangay-grid, .services-directory, .contact-grid, .stat-grid, .footer-top, .dept-icon-grid { grid-template-columns: 1fr; }
   .cta-banner .container { flex-direction: column; text-align: center; }
   .form-grid { grid-template-columns: 1fr; }
   .section { padding: 56px 0; }
+  .brand .seal { width: 38px; height: 38px; }
+  .brand-text .name-en { font-size: .8rem; }
+  .brand-text .name-fil { font-size: .58rem; }
+  .brand-text .name-country { font-size: .48rem; }
+  .header-cta .btn { display: none; }
+  .header-cta { gap: 8px; }
 }

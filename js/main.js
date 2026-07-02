@@ -45,4 +45,29 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   });
+
+  // Scroll reveal animation for sections and card grids
+  if ('IntersectionObserver' in window) {
+    var revealTargets = document.querySelectorAll(
+      '.section, .cta-banner, .leaders-strip, .partners-strip'
+    );
+    var staggerGrids = document.querySelectorAll(
+      '.officials-grid, .news-grid, .dept-icon-grid, .barangay-grid, .services-directory, .stat-grid, .quicklinks-grid, .gallery-grid'
+    );
+
+    revealTargets.forEach(function (el) { el.classList.add('reveal'); });
+    staggerGrids.forEach(function (el) { el.classList.add('reveal-stagger'); });
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+
+    revealTargets.forEach(function (el) { io.observe(el); });
+    staggerGrids.forEach(function (el) { io.observe(el); });
+  }
 });

@@ -179,7 +179,8 @@ document.addEventListener('DOMContentLoaded', function () {
     ]
   };
 
-  // Full Disclosure Portal: generate ordinance lists per year from uploaded files
+  // Full Disclosure Portal: generate paginated ordinance lists per year from uploaded files
+  var FDP_PAGE_SIZE = 10;
   document.querySelectorAll('.fdp-ord-year-table').forEach(function (tbody) {
     var year = tbody.getAttribute('data-year');
     var titles = ordinanceTitles[year] || [];
@@ -189,23 +190,66 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     (ordinanceExtras[year] || []).forEach(function (item) { entries.push(item); });
     entries.sort(function (a, b) { return b.sort - a.sort; });
-    tbody.innerHTML = entries.map(function (entry) {
+
+    var pager = document.createElement('div');
+    pager.className = 'fdp-pagination';
+    tbody.closest('table').insertAdjacentElement('afterend', pager);
+
+    var state = { all: entries, filtered: entries, page: 1 };
+
+    function renderRow(entry) {
       var file = 'assets/Ordinances/' + year + '/' + entry.file;
       return '<tr><td class="ord-no">Ordinance No. ' + year + '-' + entry.num + '</td>' +
              '<td><a href="' + file + '" class="doc-title" target="_blank">' + entry.title + '</a></td>' +
              '<td><a href="' + file + '" class="btn-view" target="_blank">📄 View</a></td></tr>';
-    }).join('');
+    }
+
+    function totalPages() { return Math.max(1, Math.ceil(state.filtered.length / FDP_PAGE_SIZE)); }
+
+    function render() {
+      var pages = totalPages();
+      if (state.page > pages) state.page = pages;
+      var start = (state.page - 1) * FDP_PAGE_SIZE;
+      var pageItems = state.filtered.slice(start, start + FDP_PAGE_SIZE);
+      tbody.innerHTML = pageItems.length ? pageItems.map(renderRow).join('') :
+        '<tr><td colspan="3" class="fdp-no-results">No matching ordinances found.</td></tr>';
+
+      if (pages <= 1) { pager.innerHTML = ''; return; }
+      var html = '';
+      for (var p = 1; p <= pages; p++) {
+        html += '<button type="button" class="fdp-page-btn' + (p === state.page ? ' active' : '') + '" data-page="' + p + '">' + p + '</button>';
+      }
+      html += '<button type="button" class="fdp-page-btn fdp-page-next" data-page="next"' + (state.page === pages ? ' disabled' : '') + '>Next »</button>';
+      pager.innerHTML = html;
+    }
+
+    pager.addEventListener('click', function (e) {
+      var btn = e.target.closest('.fdp-page-btn');
+      if (!btn || btn.disabled) return;
+      var target = btn.getAttribute('data-page');
+      state.page = target === 'next' ? Math.min(state.page + 1, totalPages()) : parseInt(target, 10);
+      render();
+    });
+
+    tbody._fdpState = state;
+    tbody._fdpRender = render;
+    render();
   });
 
-  // Full Disclosure Portal: live search within the active tab of a panel
+  // Full Disclosure Portal: live search filters and re-paginates the ordinance tables
   document.querySelectorAll('.fdp-search').forEach(function (input) {
     input.addEventListener('input', function () {
       var query = input.value.trim().toLowerCase();
       var panel = input.closest('.fdp-panel');
       if (!panel) return;
-      var scope = panel.querySelector('.fdp-tab-panel.active') || panel;
-      scope.querySelectorAll('table tbody tr').forEach(function (row) {
-        row.style.display = row.textContent.toLowerCase().indexOf(query) !== -1 ? '' : 'none';
+      panel.querySelectorAll('.fdp-ord-year-table').forEach(function (tbody) {
+        var state = tbody._fdpState;
+        if (!state) return;
+        state.filtered = query ? state.all.filter(function (entry) {
+          return (entry.num + ' ' + entry.title).toLowerCase().indexOf(query) !== -1;
+        }) : state.all;
+        state.page = 1;
+        tbody._fdpRender();
       });
     });
   });
@@ -249,7 +293,7 @@ document.addEventListener('DOMContentLoaded', function () {
           io.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
+    }, { threshold: 0, rootMargin: '0px 0px -60px 0px' });
 
     revealTargets.forEach(function (el) { io.observe(el); });
     staggerGrids.forEach(function (el) { io.observe(el); });
